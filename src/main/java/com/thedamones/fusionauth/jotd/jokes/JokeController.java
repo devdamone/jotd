@@ -1,5 +1,6 @@
 package com.thedamones.fusionauth.jotd.jokes;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
@@ -32,12 +33,14 @@ public class JokeController {
     }
 
     @GetMapping
+    @SecurityRequirement(name = "basicAuth")
     public PagedModel<EntityModel<JokeRecord>> getJokes(@RequestParam(required = false) LocalDate date, @ParameterObject Pageable pageable) {
         return pagedResourcesAssembler.toModel(jokeService.getJokes(date, pageable), jokeModelAssembler);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @SecurityRequirement(name = "basicAuth")
     public ResponseEntity<EntityModel<JokeRecord>> createJoke(@Valid @RequestBody CreateJokeRecord request) {
         JokeRecord newJoke = jokeService.addJoke(request);
         EntityModel<JokeRecord> model = jokeModelAssembler.toModel(newJoke);
@@ -54,12 +57,14 @@ public class JokeController {
     }
 
     @GetMapping("/{id}")
+    @SecurityRequirement(name = "basicAuth")
     public EntityModel<JokeRecord> getJoke(@PathVariable UUID id) {
         JokeRecord joke = jokeService.getJoke(id);
         return jokeModelAssembler.toModel(joke);
     }
 
     @PutMapping("/{id}")
+    @SecurityRequirement(name = "basicAuth")
     public EntityModel<JokeRecord> updateJoke(@PathVariable UUID id, @Valid @RequestBody JokeRecord request) {
         JokeRecord joke = jokeService.updateJoke(id, request);
         return jokeModelAssembler.toModel(joke);
@@ -67,6 +72,7 @@ public class JokeController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @SecurityRequirement(name = "basicAuth")
     public void deleteJoke(@PathVariable UUID id) {
         jokeService.removeJoke(id);
     }

@@ -254,7 +254,7 @@ This application provides basic CRUD operations for Jokes. All endpoints return 
     * Error Responses:
         * `404 Not Found`: There is no joke for the current date.
 
-The API also provides a Swagger UI for interactive exploration and documentation of the available endpoints.  You can access it at `http://localhost:8080/swagger-ui.html` after running the application.
+The API also provides a Swagger UI for interactive exploration and documentation of the available endpoints.  You can access it at [`http://localhost:8080/swagger-ui.html`](http://localhost:8080/swagger-ui.html) after running the application.
 
 ## Demo REST API Endpoints
 
@@ -277,6 +277,23 @@ These endpoints are only available when the application is run with the demo pro
         ```
     * Error Responses:
       * `500 Internal Server Error`: An error occurred during the upload, parsing, or saving of the jokes.  The response will contain an error message.
+
+## Security Configuration
+
+The application is secured using Spring Security.  The following security rules are applied:
+
+* The `/jotd` page (Thymeleaf template) is accessible without authentication.
+* The `GET /api/v1/jokes/today` endpoint is accessible without authentication.
+* All other endpoints require authentication.
+  * Any user can access the `GET /api/v1/jokes` endpoint.
+  * Any user can access the `GET /api/v1/jokes/{id}` endpoint.
+  * Only users with the "ADMIN" role can access the `POST`, `PUT`, and `DELETE` methods for the `/api/v1/jokes` endpoint.
+
+The demo profile is loaded with two in-memory users:
+* `admin`: with password `secret` and role "ADMIN" which inherits role `USER`
+* `user`: with password `secret` and role "USER"
+
+This configuration ensures that sensitive operations (creating, updating, and deleting jokes) are protected, while read-only operations are more broadly accessible.  The demo page and the "joke of the day" are publicly accessible.
 
 ## Design Decisions and Class Descriptions
 

@@ -54,6 +54,14 @@ Each layer is described in more detail below.
 
 This section outlines potential future enhancements for the application. These enhancements were considered during the exercise, but simpler implementations were chosen to showcase the potential for more sophisticated designs within the given time constraints.
 
+### Production Database and User Management
+
+* **Production Database:** The current application uses an embedded H2 database, which is convenient for development but not suitable for production.  A production-ready SQL database (e.g., PostgreSQL, MySQL) should be used.  Spring Boot makes this relatively easy to switch by changing the database driver and connection URL in the application properties.
+* **User Database:** The application currently uses an in-memory user details service for authentication.  For a production application, a dedicated user database and management system is essential.  A potential solution is to integrate with FusionAuth, which provides comprehensive user management, authentication, and authorization features.
+* **Enhanced Security with FusionAuth:** Using a true user database like FusionAuth would enable much more sophisticated security policies.  For example:
+  * **Tenants/Groups:** Jokes could be associated with tenants or groups, allowing fine-grained control over which users can view which jokes.  This would be useful in a multi-tenant environment or an application with user communities.
+  * **Ownership:** Each joke could have an "owner."  Security rules could then be implemented to allow only the owner or an administrator to update or delete a joke.
+
 ### Joke Data Model Enhancements
 
 * **Relaxing Date Constraint:** The current design enforces a single joke per year-month-day. Future enhancements could relax this constraint:
@@ -88,3 +96,7 @@ This section outlines potential future enhancements for the application. These e
 ### Caching
 * Implement caching mechanisms, potentially using HTTP `Cache-Control` headers, to reduce server load.
     * For example, the "joke of the day" (especially the `/today` endpoint) could be cached to reduce the number of requests to the server. This assumes that immediate propagation of updates is not a critical requirement, especially if combined with a restriction that prevents editing jokes in the past.
+
+### Application Logging
+
+* **Application-Specific Logging:** Could add application-specific logging to key business logic functionality (e.g., in the service layer) to track data modifications, user actions, and potential issues.

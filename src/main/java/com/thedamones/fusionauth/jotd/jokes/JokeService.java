@@ -1,5 +1,7 @@
 package com.thedamones.fusionauth.jotd.jokes;
 
+import com.thedamones.fusionauth.jotd.config.IsAdmin;
+import com.thedamones.fusionauth.jotd.config.IsUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
@@ -32,6 +33,7 @@ public class JokeService {
         this.conversionService = conversionService;
     }
 
+    @IsUser
     public Page<JokeRecord> getJokes(LocalDate date, Pageable pageable) {
         Page<Joke> jokes;
         if (date == null) {
@@ -43,6 +45,7 @@ public class JokeService {
         return jokes.map(toJokeRecord());
     }
 
+    @IsAdmin
     @Transactional
     public JokeRecord addJoke(CreateJokeRecord request) {
         return createJoke(request)
@@ -51,6 +54,7 @@ public class JokeService {
                 .orElseThrow(jokeServiceException("Exception while adding joke"));
     }
 
+    @IsUser
     public JokeRecord getJoke(UUID id) {
         return jokeRepository.findById(id)
                 .map(toJokeRecord())
@@ -64,6 +68,7 @@ public class JokeService {
                 .orElseThrow(noJokeOfTheDayException(today));
     }
 
+    @IsAdmin
     @Transactional
     public JokeRecord updateJoke(UUID id, JokeRecord request) {
         return jokeRepository.findById(id)
@@ -73,6 +78,7 @@ public class JokeService {
                 .orElseThrow(jokeNotFoundException(request.id()));
     }
 
+    @IsAdmin
     @Transactional
     public void removeJoke(UUID id) {
         if (!jokeRepository.existsById(id)) {

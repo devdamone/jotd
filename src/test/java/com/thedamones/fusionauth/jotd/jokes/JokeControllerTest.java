@@ -1,6 +1,7 @@
 package com.thedamones.fusionauth.jotd.jokes;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.thedamones.fusionauth.jotd.config.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -36,14 +38,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(JokeController.class)
-@Import({JokeModelAssembler.class})
+@Import({JokeModelAssembler.class, SecurityConfig.class})
 class JokeControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @MockitoBean
-    private JokeRepository jokeRepository;
 
     @MockitoBean
     private JokeService jokeService;
@@ -52,10 +51,11 @@ class JokeControllerTest {
     private ObjectMapper objectMapper;
 
     @Test
+    @WithMockUser
     void getJokes_shouldReturnPageOfJokes() throws Exception {
         Pageable pageRequest = PageRequest.ofSize(20);
         Page<JokeRecord> page = TestJokes.createPageOfJokeRecords(pageRequest, 100);
-        JokeRecord joke0 = page.getContent().get(0);
+        JokeRecord joke0 = page.getContent().getFirst();
         when(jokeService.getJokes(null, pageRequest)).thenReturn(page);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/jokes"))
@@ -72,10 +72,11 @@ class JokeControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getJokes_withDate() throws Exception {
         Pageable pageRequest = PageRequest.ofSize(20);
         Page<JokeRecord> page = TestJokes.createPageOfJokeRecords(pageRequest, 100);
-        JokeRecord joke0 = page.getContent().get(0);
+        JokeRecord joke0 = page.getContent().getFirst();
         when(jokeService.getJokes(joke0.date(), pageRequest)).thenReturn(page);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/jokes?date=" + joke0.date().toString()))
@@ -92,6 +93,13 @@ class JokeControllerTest {
     }
 
     @Test
+    public void getJokes_withoutUser_returnsUnauthorized() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/jokes"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser
     void createJoke_shouldCreateNewResource() throws Exception {
         CreateJokeRecord request = createTestCreateJokeRecord();
         JokeRecord jokeRecord = createTestJokeRecord();
@@ -113,6 +121,7 @@ class JokeControllerTest {
     }
 
     @Test
+    @WithMockUser
     void createJoke_whenDuplicateDate() throws Exception {
         CreateJokeRecord request = createTestCreateJokeRecord();
         when(jokeService.addJoke(request)).thenThrow(JokeDataIntegrityException.class);
@@ -125,6 +134,7 @@ class JokeControllerTest {
     }
 
     @Test
+    @WithMockUser
     void createJoke_whenNullDate() throws Exception {
         CreateJokeRecord request = new CreateJokeRecord(null, TEST_JOKE, TEST_DESCRIPTION);
 
@@ -136,6 +146,13 @@ class JokeControllerTest {
     }
 
     @Test
+    public void createJoke_withoutUser_returnsUnauthorized() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/jokes"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser
     void createJoke_whenBlankJoke() throws Exception {
         CreateJokeRecord request = new CreateJokeRecord(TEST_DATE, "", TEST_DESCRIPTION);
 
@@ -173,6 +190,7 @@ class JokeControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getJoke_shouldReturnResourceModel() throws Exception {
         JokeRecord jokeRecord = createTestJokeRecord();
         String selfLink = "/api/v1/jokes/" + jokeRecord.id().toString();
@@ -190,6 +208,7 @@ class JokeControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getJoke_whenNotFound() throws Exception {
         when(jokeService.getJoke(TEST_ID)).thenThrow(JokeNotFoundException.class);
 
@@ -199,6 +218,7 @@ class JokeControllerTest {
     }
 
     @Test
+    @WithMockUser
     void updateJoke_shouldSaveJokeUpdates() throws Exception {
         JokeRecord jokeRecord = createTestJokeRecord();
         String selfLink = "/api/v1/jokes/" + jokeRecord.id().toString();
@@ -219,10 +239,10 @@ class JokeControllerTest {
     }
 
     @Test
+    @WithMockUser
     void updateJoke_withChangedId() throws Exception {
         UUID jokeId = UUID.randomUUID();
         JokeRecord jokeRecord = createTestJokeRecord();
-        String selfLink = "/api/v1/jokes/" + jokeRecord.id().toString();
         when(jokeService.updateJoke(jokeId, jokeRecord)).thenThrow(JokeDataOperationException.class);
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/v1/jokes/" + jokeId)
@@ -233,6 +253,7 @@ class JokeControllerTest {
     }
 
     @Test
+    @WithMockUser
     void updateJoke_whenNotFound() throws Exception {
         JokeRecord jokeRecord = createTestJokeRecord();
         when(jokeService.updateJoke(jokeRecord.id(), jokeRecord)).thenThrow(JokeNotFoundException.class);
@@ -247,6 +268,7 @@ class JokeControllerTest {
     }
 
     @Test
+    @WithMockUser
     void deleteJoke_shouldRemoveJoke() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/jokes/" + TEST_ID))
                 .andDo(print())
@@ -256,6 +278,7 @@ class JokeControllerTest {
     }
 
     @Test
+    @WithMockUser
     void deleteJoke_whenNotFound() throws Exception {
         doThrow(JokeNotFoundException.class).when(jokeService).removeJoke(TEST_ID);
 
