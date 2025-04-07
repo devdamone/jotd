@@ -45,6 +45,9 @@ class JokeControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
+    private JokeRepository jokeRepository;
+
+    @MockitoBean
     private JokeService jokeService;
 
     @Autowired
